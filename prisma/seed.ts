@@ -64,6 +64,8 @@ async function main() {
 
   // 1b. Create Student Fees & Payments
   console.log('Seeding student fees and payment transactions...');
+  const allFees: any[] = [];
+  const allPayments: any[] = [];
   for (let idx = 0; idx < students.length; idx++) {
     const student = students[idx];
     
@@ -77,15 +79,13 @@ async function main() {
     ];
 
     for (const f of feeItems) {
-      await prisma.fee.create({
-        data: {
-          studentId: student.id,
-          label: f.label,
-          amount: f.amount,
-          paid: f.paid,
-          dueDate: f.dueDate,
-          overdue: f.overdue || false,
-        }
+      allFees.push({
+        studentId: student.id,
+        label: f.label,
+        amount: f.amount,
+        paid: f.paid,
+        dueDate: f.dueDate,
+        overdue: f.overdue || false,
       });
 
       // If paid, create a payment transaction record
@@ -93,19 +93,19 @@ async function main() {
         const payDate = new Date('2024-08-05');
         payDate.setDate(payDate.getDate() + (idx % 5));
         
-        await prisma.payment.create({
-          data: {
-            studentId: student.id,
-            feeLabel: f.label,
-            amount: f.amount,
-            method: idx % 2 === 0 ? 'Net Banking' : 'UPI',
-            status: 'success',
-            date: payDate,
-          }
+        allPayments.push({
+          studentId: student.id,
+          feeLabel: f.label,
+          amount: f.amount,
+          method: idx % 2 === 0 ? 'Net Banking' : 'UPI',
+          status: 'success',
+          date: payDate,
         });
       }
     }
   }
+  await prisma.fee.createMany({ data: allFees });
+  await prisma.payment.createMany({ data: allPayments });
 
   // Faculty Members
   const facultyData = [
@@ -239,6 +239,7 @@ async function main() {
     [0.90, [0.90, 0.88, 0.95, 0.90, 0.90]],
   ];
 
+  const allAttendance: any[] = [];
   for (let sIdx = 0; sIdx < students.length; sIdx++) {
     const student = students[sIdx];
     const [, subjectRates] = studentAttendancePatterns[sIdx] as [number, number[]];
@@ -263,17 +264,16 @@ async function main() {
           status = 'absent';
         }
 
-        await prisma.attendance.create({
-          data: {
-            enrollmentId: enrollment.id,
-            classId: classes[i].id,
-            attendanceDate: attendanceDate,
-            status: status
-          }
+        allAttendance.push({
+          enrollmentId: enrollment.id,
+          classId: classes[i].id,
+          attendanceDate: attendanceDate,
+          status: status
         });
       }
     }
   }
+  await prisma.attendance.createMany({ data: allAttendance });
 
   // 6. Create Assignments
   const assignmentsData = [
@@ -302,72 +302,67 @@ async function main() {
   }
 
   // 7. Seed Submissions for ALL students with realistic grades
-  // Marks patterns: [DS, OS, DBMS, Networks, SE] per student
   const studentMarksPatterns = [
-    [87, null, 76, 82, null],   // Arjun: DS graded, OS pending, DBMS graded
-    [92, 88, 94, null, 85],     // Priya: top performer
-    [65, null, 72, 70, null],   // Rahul: average
-    [90, 86, 91, 88, 89],      // Ananya: excellent
-    [85, 80, 88, 82, 84],      // Karan: good
-    [78, 70, 82, 75, 79],      // Sneha: decent
-    [55, null, 60, 58, null],   // Dev: struggling
-    [72, 68, 75, 70, 73],      // Riya: average
-    [82, 78, 85, 80, 83],      // Amit: good
-    [88, 84, 90, 86, 87],      // Pooja: very good
+    [87, null, 76, 82, null],   // Arjun
+    [92, 88, 94, null, 85],     // Priya
+    [65, null, 72, 70, null],   // Rahul
+    [90, 86, 91, 88, 89],      // Ananya
+    [85, 80, 88, 82, 84],      // Karan
+    [78, 70, 82, 75, 79],      // Sneha
+    [55, null, 60, 58, null],   // Dev
+    [72, 68, 75, 70, 73],      // Riya
+    [82, 78, 85, 80, 83],      // Amit
+    [88, 84, 90, 86, 87],      // Pooja
   ];
 
+  const allSubmissions: any[] = [];
   for (let sIdx = 0; sIdx < students.length; sIdx++) {
     const student = students[sIdx];
     const marks = studentMarksPatterns[sIdx];
 
     for (let aIdx = 0; aIdx < createdAssignments.length; aIdx++) {
       const m = marks[aIdx];
-      if (m === null) continue; // Skip — not submitted or pending
-
-      // Avoid duplicate: Arjun already has submissions seeded above
+      if (m === null) continue; 
       if (sIdx === 0) continue;
 
-      await prisma.submission.create({
-        data: {
-          assignmentId: createdAssignments[aIdx].id,
-          studentId: student.id,
-          status: 'graded',
-          marks: m,
-          content: 'The solution contains the source code, design decisions, and unit test logs for verification. Handled all edge cases successfully.',
-          submittedAt: new Date(today.getTime() - (aIdx + 1) * 24 * 60 * 60 * 1000)
-        }
+      allSubmissions.push({
+        assignmentId: createdAssignments[aIdx].id,
+        studentId: student.id,
+        status: 'graded',
+        marks: m,
+        content: 'The solution contains the source code, design decisions, and unit test logs for verification. Handled all edge cases successfully.',
+        submittedAt: new Date(today.getTime() - (aIdx + 1) * 24 * 60 * 60 * 1000)
       });
     }
   }
+  await prisma.submission.createMany({ data: allSubmissions });
 
-  // Keep Arjun's specific submissions seeded manually
-  await prisma.submission.create({
-    data: {
-      assignmentId: createdAssignments[3].id, // Socket programming (overdue/past)
-      studentId: students[0].id,
-      status: 'graded',
-      marks: 87,
-      feedback: 'Excellent work on TCP implementation. UDP section needs improvement.',
-      content: 'Here is my complete source code for the TCP and UDP socket server/client. Tested on local interface. Handled concurrent clients via thread pool.'
-    }
-  });
-  await prisma.submission.create({
-    data: {
-      assignmentId: createdAssignments[1].id, // Process scheduling
-      studentId: students[0].id,
-      status: 'submitted',
-      content: 'Completed SJF, FCFS and Round Robin simulator code. Included visual bar graphs for execution timelines. Output matches theoretical computations.',
-      submittedAt: new Date(today.getTime() - 24 * 60 * 60 * 1000)
-    }
-  });
-  await prisma.submission.create({
-    data: {
-      assignmentId: createdAssignments[0].id,
-      studentId: students[0].id,
-      status: 'submitted',
-      content: 'AVL tree balance implementation with LL, RR, LR and RL rotations. Included performance comparisons under sorted insertions.',
-      submittedAt: new Date(today.getTime() - 2 * 60 * 60 * 1000)
-    }
+  // Keep Arjun's specific submissions
+  await prisma.submission.createMany({
+    data: [
+      {
+        assignmentId: createdAssignments[3].id,
+        studentId: students[0].id,
+        status: 'graded',
+        marks: 87,
+        feedback: 'Excellent work on TCP implementation. UDP section needs improvement.',
+        content: 'Here is my complete source code for the TCP and UDP socket server/client. Tested on local interface. Handled concurrent clients via thread pool.'
+      },
+      {
+        assignmentId: createdAssignments[1].id,
+        studentId: students[0].id,
+        status: 'submitted',
+        content: 'Completed SJF, FCFS and Round Robin simulator code. Included visual bar graphs for execution timelines. Output matches theoretical computations.',
+        submittedAt: new Date(today.getTime() - 24 * 60 * 60 * 1000)
+      },
+      {
+        assignmentId: createdAssignments[0].id,
+        studentId: students[0].id,
+        status: 'submitted',
+        content: 'AVL tree balance implementation with LL, RR, LR and RL rotations. Included performance comparisons under sorted insertions.',
+        submittedAt: new Date(today.getTime() - 2 * 60 * 60 * 1000)
+      }
+    ]
   });
 
   // 8. Create Notices
@@ -435,7 +430,6 @@ async function main() {
     },
   ];
 
-  // Assign notes to different users
   const noteAuthors = [adminUser.id, students[0].userId, students[1].userId, faculties[0].userId, students[2].userId];
   for (let i = 0; i < notesData.length; i++) {
     const n = notesData[i];
@@ -463,4 +457,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

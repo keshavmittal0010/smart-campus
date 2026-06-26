@@ -1,0 +1,19 @@
+{
+  "name": "SmartCampus",
+  "short_name": "SmartCampus",
+  "description": "Smart Campus Utility Platform — ERP for modern educational institutions",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "en-IN"
+}

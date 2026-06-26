@@ -8,14 +8,30 @@
     "start": "next start"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "@types/qrcode": "^1.5.6",
+    "bcryptjs": "^3.0.3",
+    "chart.js": "^4.5.1",
+    "dotenv": "^17.4.2",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.21.0",
     "next": "16.2.9",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "prisma": "^5.22.0",
+    "tsx": "^4.7.1",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

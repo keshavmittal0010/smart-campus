@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model assignment {
+  id           String       @id
+  classId      String
+  title        String
+  description  String?      @db.Text
+  dueDate      DateTime
+  maxMarks     Int          @default(100)
+  createdAt    DateTime     @default(now())
+  Renamedclass Renamedclass @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Assignment_classId_fkey")
+  submission   submission[]
+
+  @@index([classId], map: "Assignment_classId_fkey")
+}
+
+model attendance {
+  id             String       @id
+  enrollmentId   String
+  classId        String
+  attendanceDate DateTime
+  status         String
+  createdAt      DateTime     @default(now())
+  Renamedclass   Renamedclass @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Attendance_classId_fkey")
+  enrollment     enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, map: "Attendance_enrollmentId_fkey")
+
+  @@unique([enrollmentId, attendanceDate], map: "Attendance_enrollmentId_attendanceDate_key")
+  @@index([classId], map: "Attendance_classId_fkey")
+}
+
+/// This model has been renamed to 'Renamedclass' during introspection, because the original name 'class' is reserved.
+model Renamedclass {
+  id         String       @id
+  courseId   String
+  facultyId  String?
+  section    String
+  assignment assignment[]
+  attendance attendance[]
+  course     course       @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "Class_courseId_fkey")
+  faculty    faculty?     @relation(fields: [facultyId], references: [id], map: "Class_facultyId_fkey")
+  enrollment enrollment[]
+
+  @@index([courseId], map: "Class_courseId_fkey")
+  @@index([facultyId], map: "Class_facultyId_fkey")
+  @@map("class")
+}
+
+model course {
+  id           String         @id
+  courseCode   String         @unique(map: "Course_courseCode_key")
+  courseName   String
+  credits      Int
+  department   String
+  semester     String
+  Renamedclass Renamedclass[]
+}
+
+model enrollment {
+  id           String       @id
+  studentId    String
+  classId      String
+  status       String       @default("active")
+  grade        Float?
+  attendance   attendance[]
+  Renamedclass Renamedclass @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Enrollment_classId_fkey")
+  student      student      @relation(fields: [studentId], references: [id], onDelete: Cascade, map: "Enrollment_studentId_fkey")
+
+  @@unique([studentId, classId], map: "Enrollment_studentId_classId_key")
+  @@index([classId], map: "Enrollment_classId_fkey")
+}
+
+model faculty {
+  id           String         @id
+  userId       String         @unique(map: "Faculty_userId_key")
+  employeeId   String         @unique(map: "Faculty_employeeId_key")
+  department   String
+  Renamedclass Renamedclass[]
+  user         user           @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Faculty_userId_fkey")
+}
+
+model note {
+  id        String   @id
+  title     String
+  content   String   @db.Text
+  subject   String
+  tags      String   @db.Text
+  shared    Boolean  @default(true)
+  views     Int      @default(0)
+  createdBy String
+  createdAt DateTime @default(now())
+  user      user     @relation(fields: [createdBy], references: [id], onDelete: Cascade, map: "Note_createdBy_fkey")
+
+  @@index([createdBy], map: "Note_createdBy_fkey")
+}
+
+model notice {
+  id        String   @id
+  createdBy String
+  title     String
+  content   String   @db.Text
+  priority  String   @default("medium")
+  createdAt DateTime @default(now())
+  category  String   @default("General")
+  user      user     @relation(fields: [createdBy], references: [id], onDelete: Cascade, map: "Notice_createdBy_fkey")
+
+  @@index([createdBy], map: "Notice_createdBy_fkey")
+}
+
+model student {
+  id         String       @id
+  userId     String       @unique(map: "Student_userId_key")
+  studentId  String       @unique(map: "Student_studentId_key")
+  department String
+  semester   String
+  section    String?
+  enrollment enrollment[]
+  user       user         @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Student_userId_fkey")
+  submission submission[]
+}
+
+model submission {
+  id           String     @id
+  assignmentId String
+  studentId    String
+  status       String     @default("pending")
+  marks        Float?
+  submittedAt  DateTime   @default(now())
+  feedback     String?
+  content      String?    @db.Text
+  assignment   assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade, map: "Submission_assignmentId_fkey")
+  student      student    @relation(fields: [studentId], references: [id], onDelete: Cascade, map: "Submission_studentId_fkey")
+
+  @@index([assignmentId], map: "Submission_assignmentId_fkey")
+  @@index([studentId], map: "Submission_studentId_fkey")
+}
+
+model user {
+  id           String   @id
+  email        String   @unique(map: "User_email_key")
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  faculty      faculty?
+  note         note[]
+  notice       notice[]
+  student      student?
+}

@@ -119,7 +119,7 @@ export default function LoginPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }} autoComplete="off">
           <div>
             <input
               className="login-input"
@@ -128,6 +128,8 @@ export default function LoginPage() {
               value={email}
               onChange={e => { setEmail(e.target.value); setError(''); }}
               required
+              autoComplete="off"
+              name="login-email"
             />
           </div>
 
@@ -140,6 +142,8 @@ export default function LoginPage() {
               onChange={e => { setPassword(e.target.value); setError(''); }}
               required
               style={{ paddingRight: '3.5rem' }}
+              autoComplete="new-password"
+              name="login-password"
             />
             <button
               type="button"

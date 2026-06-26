@@ -88,6 +88,19 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         router.push('/');
         return;
       }
+
+      // ✅ ROLE GUARD: Ensure user can only access their own role's routes
+      const role = parsed.role as string;
+      const sharedRoutes = ['/notices', '/notes', '/chatbot', '/leaderboard', '/analytics', '/profile'];
+      const isShared = sharedRoutes.some(r => pathname.startsWith(r));
+      const isOwnRole = pathname.startsWith(`/${role}`);
+
+      if (!isShared && !isOwnRole) {
+        // User is trying to access another role's section — redirect to their dashboard
+        router.replace(`/${role}/dashboard`);
+        return;
+      }
+
       setUser(parsed);
     } catch (e) {
       localStorage.removeItem('sc_role');

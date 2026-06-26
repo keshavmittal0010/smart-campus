@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 
 export async function POST(req: Request) {
   try {
@@ -10,21 +11,33 @@ export async function POST(req: Request) {
     }
 
     // Find user in DB
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        student: true,
-        faculty: true
-      }
-    });
+    let user;
+    try {
+      user = await prisma.user.findUnique({
+        where: { email },
+        include: {
+          student: true,
+          faculty: true
+        }
+      });
+    } catch (dbError) {
+      console.error('Database connection error:', dbError);
+      return NextResponse.json({ error: 'Database connection failed. Please check server configuration.' }, { status: 503 });
+    }
 
     if (!user) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // In a real app, use bcrypt.compare(password, user.passwordHash)
-    // Here we are skipping the strict password check for demo purposes
-    // since the mock seed uses 'hashed_password'
+    // Support both bcrypt hashes and the plain demo password used in seed
+    const isValidPassword =
+      user.passwordHash === 'hashed_password'
+        ? password === 'password123'
+        : await bcrypt.compare(password, user.passwordHash);
+
+    if (!isValidPassword) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
 
     const payload = {
       id: user.id,
@@ -35,10 +48,6 @@ export async function POST(req: Request) {
       profile: user.student || user.faculty
     };
 
-    // Instead of actual JWT via cookies for this MVP, we return the payload
-    // and let the client manage it in localStorage (like before) to ensure smooth transition.
-    // In production, you would sign a JWT here and set an HTTP-only cookie.
-    
     return NextResponse.json({
       message: 'Login successful',
       user: payload,
@@ -50,3 +59,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+

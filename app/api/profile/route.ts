@@ -119,3 +119,43 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    const { userId, currentPassword, newPassword } = await req.json();
+
+    if (!userId || !currentPassword || !newPassword) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Verify current password
+    // Support either the stored hash or the standard default demo passwords if the hash is still 'hashed_password'
+    const isDefault = user.passwordHash === 'hashed_password';
+    const isMatch = currentPassword === user.passwordHash || 
+                    (isDefault && (currentPassword === 'student123' || currentPassword === 'faculty123' || currentPassword === 'admin123'));
+
+    if (!isMatch) {
+      return NextResponse.json({ error: 'Incorrect current password' }, { status: 400 });
+    }
+
+    // Update password in database
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newPassword }
+    });
+
+    return NextResponse.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Password change error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+

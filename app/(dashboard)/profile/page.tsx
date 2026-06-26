@@ -10,6 +10,13 @@ export default function ProfilePage() {
   const [profileData, setProfileData] = useState<any>(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
+  // Security password change states
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [securityMessage, setSecurityMessage] = useState({ text: '', isError: false });
+
   useEffect(() => {
     const stored = localStorage.getItem('sc_user');
     if (stored) {
@@ -31,6 +38,50 @@ export default function ProfilePage() {
     setSaved(true);
     setEditing(false);
     setTimeout(() => setSaved(false), 3000);
+  };
+
+  const handlePasswordChange = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSecurityMessage({ text: '', isError: false });
+
+    if (newPassword.length < 6) {
+      setSecurityMessage({ text: 'New password must be at least 6 characters long', isError: true });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setSecurityMessage({ text: 'New passwords do not match', isError: true });
+      return;
+    }
+
+    setUpdatingPassword(true);
+
+    fetch('/api/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: user.id,
+        currentPassword,
+        newPassword
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        setUpdatingPassword(false);
+        if (data.success) {
+          setSecurityMessage({ text: 'Password successfully updated!', isError: false });
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+        } else {
+          setSecurityMessage({ text: data.error || 'Failed to update password', isError: true });
+        }
+      })
+      .catch(err => {
+        setUpdatingPassword(false);
+        console.error(err);
+        setSecurityMessage({ text: 'Network error. Please try again.', isError: true });
+      });
   };
 
   if (!user) return null;
@@ -131,9 +182,9 @@ export default function ProfilePage() {
         {/* Right */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div className="tabs" style={{ display: 'inline-flex' }}>
-            {['profile', 'activity'].map(t => (
+            {['profile', 'activity', 'security'].map(t => (
               <div key={t} className={`tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)} style={{ textTransform: 'capitalize' }}>
-                {t === 'profile' ? '👤 Profile Info' : '📋 Activity History'}
+                {t === 'profile' ? '👤 Profile Info' : t === 'activity' ? '📋 Activity History' : '🔐 Account Security'}
               </div>
             ))}
           </div>
@@ -182,7 +233,7 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-          ) : (
+          ) : tab === 'activity' ? (
             <div className="card">
               <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '1.25rem' }}>Recent Activity</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
@@ -198,6 +249,77 @@ export default function ProfilePage() {
                   </div>
                 ))}
               </div>
+            </div>
+          ) : (
+            <div className="card animate-fade-in">
+              <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                🔐 Change Account Password
+              </div>
+              
+              {securityMessage.text && (
+                <div style={{
+                  marginBottom: '1.25rem',
+                  padding: '0.75rem 1.25rem',
+                  background: securityMessage.isError ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
+                  border: `1px solid ${securityMessage.isError ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}`,
+                  borderRadius: 'var(--radius-lg)',
+                  color: securityMessage.isError ? 'var(--danger)' : 'var(--success)',
+                  fontSize: '0.875rem',
+                  fontWeight: 600
+                }}>
+                  {securityMessage.isError ? '⚠️' : '✓'} {securityMessage.text}
+                </div>
+              )}
+
+              <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '400px' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontWeight: 600 }}>Current Password</label>
+                  <input
+                    type="password"
+                    required
+                    className="form-input"
+                    value={currentPassword}
+                    onChange={e => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    style={{ background: 'var(--surface-2)' }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontWeight: 600 }}>New Password</label>
+                  <input
+                    type="password"
+                    required
+                    className="form-input"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder="Minimum 6 characters"
+                    style={{ background: 'var(--surface-2)' }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontWeight: 600 }}>Confirm New Password</label>
+                  <input
+                    type="password"
+                    required
+                    className="form-input"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                    style={{ background: 'var(--surface-2)' }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={updatingPassword}
+                  style={{ alignSelf: 'flex-start', marginTop: '0.5rem', minWidth: '140px' }}
+                >
+                  {updatingPassword ? 'Updating...' : 'Update Password'}
+                </button>
+              </form>
             </div>
           )}
         </div>

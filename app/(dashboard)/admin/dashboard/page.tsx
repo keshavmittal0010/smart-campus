@@ -141,7 +141,7 @@ export default function AdminDashboard() {
             { icon: '👥', label: 'Manage Users', desc: 'Add, edit, deactivate users', href: '/admin/users', color: '#3b82f6' },
             { icon: '📢', label: 'Post Notice', desc: 'Campus-wide announcement', href: '/notices', color: '#10b981' },
             { icon: '📊', label: 'View Analytics', desc: 'Detailed platform insights', href: '/analytics', color: '#8b5cf6' },
-            { icon: '📋', label: 'Generate Report', desc: 'Export academic reports', href: '#', color: '#f59e0b' },
+            { icon: '💳', label: 'Manage Fees', desc: 'Billing demands & collections', href: '/admin/fees', color: '#f59e0b' },
           ].map(action => (
             <a key={action.label} href={action.href} style={{ padding: '1.25rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', cursor: 'pointer', transition: 'all 0.2s', textDecoration: 'none', display: 'block' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = action.color; (e.currentTarget as HTMLElement).style.background = `${action.color}10`; }}

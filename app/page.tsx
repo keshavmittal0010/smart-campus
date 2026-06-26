@@ -20,10 +20,11 @@ const features = [
 export default function LoginPage() {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState('student');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('arjun.sharma@campus.edu');
+  const [password, setPassword] = useState('student123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleDemoLogin = (roleId: string) => {
     const role = roles.find(r => r.id === roleId)!;
@@ -133,15 +134,42 @@ export default function LoginPage() {
             />
           </div>
 
-          <div>
+          <div style={{ position: 'relative' }}>
             <input
               className="login-input"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="Password"
               value={password}
               onChange={e => { setPassword(e.target.value); setError(''); }}
               required
+              style={{ paddingRight: '3.5rem' }}
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute',
+                right: '1.25rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: 'rgba(255,255,255,0.4)',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                outline: 'none',
+                transition: 'color 0.2s',
+                padding: '4px'
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.8)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
+              title={showPassword ? 'Hide Password' : 'Show Password'}
+            >
+              {showPassword ? '👁️' : '🙈'}
+            </button>
           </div>
 
           {error && (

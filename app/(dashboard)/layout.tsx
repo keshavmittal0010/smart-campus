@@ -40,6 +40,7 @@ const navItems: {
   admin: [
     { href: '/admin/dashboard', icon: '🏠', label: 'Dashboard' },
     { href: '/admin/users', icon: '👥', label: 'User Management' },
+    { href: '/admin/fees', icon: '💳', label: 'Manage Fees' },
     { href: '/chatbot', icon: '🤖', label: 'ARIA AI' },
     { href: '/analytics', icon: '📊', label: 'Analytics' },
     { href: '/notices', icon: '📢', label: 'Notices' },

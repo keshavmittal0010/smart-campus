@@ -123,6 +123,8 @@ model student {
   enrollments enrollment[]
   user        user         @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Student_userId_fkey")
   submissions submission[]
+  fees        fee[]
+  payments    payment[]
 }
 
 model submission {
@@ -155,3 +157,32 @@ model user {
   notices      notice[]
   student      student?
 }
+
+model fee {
+  id        String   @id @default(uuid())
+  studentId String
+  label     String
+  amount    Int
+  dueDate   DateTime
+  paid      Boolean  @default(false)
+  overdue   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  student   student  @relation(fields: [studentId], references: [id], onDelete: Cascade, map: "Fee_studentId_fkey")
+
+  @@index([studentId], map: "Fee_studentId_fkey")
+}
+
+model payment {
+  id        String   @id @default(uuid())
+  studentId String
+  feeLabel  String
+  amount    Int
+  method    String
+  status    String   @default("success")
+  date      DateTime @default(now())
+  student   student  @relation(fields: [studentId], references: [id], onDelete: Cascade, map: "Payment_studentId_fkey")
+
+  @@index([studentId], map: "Payment_studentId_fkey")
+}
+

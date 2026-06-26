@@ -6,6 +6,8 @@ async function main() {
   console.log('Clearing existing database data...');
   
   // Clean up in dependency order
+  await prisma.payment.deleteMany({});
+  await prisma.fee.deleteMany({});
   await prisma.attendance.deleteMany({});
   await prisma.submission.deleteMany({});
   await prisma.assignment.deleteMany({});
@@ -58,6 +60,51 @@ async function main() {
       }
     });
     students.push(user.student);
+  }
+
+  // 1b. Create Student Fees & Payments
+  console.log('Seeding student fees and payment transactions...');
+  for (let idx = 0; idx < students.length; idx++) {
+    const student = students[idx];
+    
+    // Default fee items
+    const feeItems = [
+      { label: 'Tuition Fee', amount: 85000, paid: idx % 3 !== 2, dueDate: new Date('2024-08-01') },
+      { label: 'Hostel Fee', amount: 42000, paid: idx % 2 === 0, dueDate: new Date('2024-08-01') },
+      { label: 'Library Fee', amount: 2500, paid: true, dueDate: new Date('2024-08-01') },
+      { label: 'Lab Fee', amount: 8500, paid: false, dueDate: new Date('2024-12-01') },
+      { label: 'Miscellaneous', amount: 3200, paid: false, dueDate: new Date('2024-11-30'), overdue: true },
+    ];
+
+    for (const f of feeItems) {
+      await prisma.fee.create({
+        data: {
+          studentId: student.id,
+          label: f.label,
+          amount: f.amount,
+          paid: f.paid,
+          dueDate: f.dueDate,
+          overdue: f.overdue || false,
+        }
+      });
+
+      // If paid, create a payment transaction record
+      if (f.paid) {
+        const payDate = new Date('2024-08-05');
+        payDate.setDate(payDate.getDate() + (idx % 5));
+        
+        await prisma.payment.create({
+          data: {
+            studentId: student.id,
+            feeLabel: f.label,
+            amount: f.amount,
+            method: idx % 2 === 0 ? 'Net Banking' : 'UPI',
+            status: 'success',
+            date: payDate,
+          }
+        });
+      }
+    }
   }
 
   // Faculty Members

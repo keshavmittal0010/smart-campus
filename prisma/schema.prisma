@@ -15,7 +15,7 @@ model assignment {
   dueDate      DateTime
   maxMarks     Int          @default(100)
   createdAt    DateTime     @default(now())
-  Renamedclass Renamedclass @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Assignment_classId_fkey")
+  Class Class @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Assignment_classId_fkey")
   submission   submission[]
 
   @@index([classId], map: "Assignment_classId_fkey")
@@ -28,15 +28,15 @@ model attendance {
   attendanceDate DateTime
   status         String
   createdAt      DateTime     @default(now())
-  Renamedclass   Renamedclass @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Attendance_classId_fkey")
+  Class   Class @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Attendance_classId_fkey")
   enrollment     enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, map: "Attendance_enrollmentId_fkey")
 
   @@unique([enrollmentId, attendanceDate], map: "Attendance_enrollmentId_attendanceDate_key")
   @@index([classId], map: "Attendance_classId_fkey")
 }
 
-/// This model has been renamed to 'Renamedclass' during introspection, because the original name 'class' is reserved.
-model Renamedclass {
+/// This model has been renamed to 'Class' during introspection, because the original name 'class' is reserved.
+model Class {
   id         String       @id
   courseId   String
   facultyId  String?
@@ -59,7 +59,7 @@ model course {
   credits      Int
   department   String
   semester     String
-  Renamedclass Renamedclass[]
+  Class Class[]
 }
 
 model enrollment {
@@ -69,7 +69,7 @@ model enrollment {
   status       String       @default("active")
   grade        Float?
   attendance   attendance[]
-  Renamedclass Renamedclass @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Enrollment_classId_fkey")
+  Class Class @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Enrollment_classId_fkey")
   student      student      @relation(fields: [studentId], references: [id], onDelete: Cascade, map: "Enrollment_studentId_fkey")
 
   @@unique([studentId, classId], map: "Enrollment_studentId_classId_key")
@@ -81,7 +81,7 @@ model faculty {
   userId       String         @unique(map: "Faculty_userId_key")
   employeeId   String         @unique(map: "Faculty_employeeId_key")
   department   String
-  Renamedclass Renamedclass[]
+  Class Class[]
   user         user           @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Faculty_userId_fkey")
 }
 

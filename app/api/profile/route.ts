@@ -10,12 +10,12 @@ export async function GET(req: NextRequest) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        studentProfile: {
+        student: {
           include: {
             enrollments: {
               include: {
                 attendance: true,
-                class: { include: { course: true } },
+                Class: { include: { course: true } },
               },
             },
             submissions: {
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
             },
           },
         },
-        facultyProfile: {
+        faculty: {
           include: {
             classes: {
               include: {
@@ -39,8 +39,8 @@ export async function GET(req: NextRequest) {
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    if (user.role === 'student' && user.studentProfile) {
-      const profile = user.studentProfile;
+    if (user.role === 'student' && user.student) {
+      const profile = user.student;
 
       // Calculate overall attendance
       let totalClasses = 0;
@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
       }
 
       const totalAssignments = await prisma.assignment.count({
-        where: { class: { enrollments: { some: { studentId: profile.id } } } },
+        where: { Class: { enrollments: { some: { studentId: profile.id } } } },
       });
       const submitted = await prisma.submission.count({
         where: { studentId: profile.id },
@@ -80,8 +80,8 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    if (user.role === 'faculty' && user.facultyProfile) {
-      const profile = user.facultyProfile;
+    if (user.role === 'faculty' && user.faculty) {
+      const profile = user.faculty;
       const classesCount = profile.classes.length;
 
       // Count unique students enrolled

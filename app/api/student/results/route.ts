@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
         enrollments: {
           include: {
             attendance: true,
-            class: {
+            Class: {
               include: {
                 course: true,
               },
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
           where: { status: 'graded' },
           include: {
             assignment: {
-              include: { class: { include: { course: true } } },
+              include: { Class: { include: { course: true } } },
             },
           },
         },
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     const gradeMap: Record<string, string> = {};
     const marksMap: Record<string, { marks: number; maxMarks: number }> = {};
     for (const sub of student.submissions) {
-      const courseId = sub.assignment.class.courseId;
+      const courseId = sub.assignment.Class.courseId;
       marksMap[courseId] = { marks: sub.marks || 0, maxMarks: sub.assignment.maxMarks };
       const pct = ((sub.marks || 0) / sub.assignment.maxMarks) * 100;
       gradeMap[courseId] = pct >= 90 ? 'O' : pct >= 80 ? 'A+' : pct >= 70 ? 'A' : pct >= 60 ? 'B+' : pct >= 50 ? 'B' : 'F';
@@ -45,14 +45,14 @@ export async function GET(req: NextRequest) {
     const subjects = student.enrollments.map(en => {
       const total = en.attendance.length;
       const attended = en.attendance.filter(a => a.status === 'present' || a.status === 'late').length;
-      const courseId = en.class.courseId;
+      const courseId = en.Class.courseId;
       const marks = marksMap[courseId] || null;
       const grade = gradeMap[courseId] || (marks ? 'N/A' : 'Pending');
 
       return {
-        name: en.class.course.courseName,
-        code: en.class.course.courseCode,
-        credits: en.class.course.credits,
+        name: en.Class.course.courseName,
+        code: en.Class.course.courseCode,
+        credits: en.Class.course.credits,
         attended,
         total,
         attendancePct: total > 0 ? Math.round((attended / total) * 100) : 0,

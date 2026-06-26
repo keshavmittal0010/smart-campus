@@ -8,19 +8,19 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { studentProfile: true },
+      include: { student: true },
     });
 
-    if (!user?.studentProfile) {
+    if (!user?.student) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
-    const studentId = user.studentProfile.id;
+    const studentId = user.student.id;
 
     // Find the first active enrollment (any class this student is enrolled in)
     const enrollment = await prisma.enrollment.findFirst({
       where: { studentId, status: 'active' },
-      include: { class: { include: { course: true } } },
+      include: { Class: { include: { course: true } } },
     });
 
     if (!enrollment) {
@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         alreadyMarked: true,
-        className: enrollment.class.course.courseName,
-        classCode: enrollment.class.course.courseCode,
+        className: enrollment.Class.course.courseName,
+        classCode: enrollment.Class.course.courseCode,
         time: today.toLocaleTimeString('en-IN', { timeStyle: 'short' }),
         status: existing.status,
       });
@@ -64,8 +64,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       alreadyMarked: false,
-      className: enrollment.class.course.courseName,
-      classCode: enrollment.class.course.courseCode,
+      className: enrollment.Class.course.courseName,
+      classCode: enrollment.Class.course.courseCode,
       time: new Date().toLocaleTimeString('en-IN', { timeStyle: 'short' }),
       status: 'present',
     });

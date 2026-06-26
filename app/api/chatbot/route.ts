@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
         where: { userId },
         include: {
           enrollments: {
-            include: { attendance: true, class: { include: { course: true } } },
+            include: { attendance: true, Class: { include: { course: true } } },
           },
         },
       });
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
           const total = en.attendance.length;
           const present = en.attendance.filter(a => a.status === 'present' || a.status === 'late').length;
           const pct = total > 0 ? Math.round((present / total) * 100) : 0;
-          return { name: en.class.course.courseName, pct, total, present };
+          return { name: en.Class.course.courseName, pct, total, present };
         });
         const overall = subjectStats.length > 0
           ? Math.round(subjectStats.reduce((s, sub) => s + sub.pct, 0) / subjectStats.length)
@@ -53,13 +53,13 @@ export async function POST(req: NextRequest) {
       if (student) {
         const enrollments = await prisma.enrollment.findMany({
           where: { studentId: student.id },
-          include: { class: { include: { assignments: { include: { submissions: { where: { studentId: student.id } } } } } } },
+          include: { Class: { include: { assignments: { include: { submissions: { where: { studentId: student.id } } } } } } },
         });
         const pending = enrollments.flatMap(en =>
-          en.class.assignments.filter(a => a.submissions.length === 0 && new Date(a.dueDate) > new Date())
+          en.Class.assignments.filter(a => a.submissions.length === 0 && new Date(a.dueDate) > new Date())
         );
         const overdue = enrollments.flatMap(en =>
-          en.class.assignments.filter(a => a.submissions.length === 0 && new Date(a.dueDate) <= new Date())
+          en.Class.assignments.filter(a => a.submissions.length === 0 && new Date(a.dueDate) <= new Date())
         );
 
         if (pending.length === 0 && overdue.length === 0) {
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     } else if (intent === 'timetable' && userId) {
       const student = await prisma.student.findFirst({
         where: { userId },
-        include: { enrollments: { include: { class: { include: { course: true, faculty: { include: { user: true } } } } } } },
+        include: { enrollments: { include: { Class: { include: { course: true, faculty: { include: { user: true } } } } } } },
       });
       if (student) {
         const scheduleSlots = ['08:00 AM', '10:00 AM', '11:00 AM', '02:00 PM', '03:00 PM'];
@@ -84,9 +84,9 @@ export async function POST(req: NextRequest) {
         const today = new Date().toLocaleDateString('en-IN', { weekday: 'long' });
         reply = `📅 Your schedule for today (${today}):\n\n`;
         student.enrollments.slice(0, 5).forEach((en, i) => {
-          const faculty = en.class.faculty?.user;
+          const faculty = en.Class.faculty?.user;
           const prof = faculty ? `Prof. ${faculty.firstName[0]}. ${faculty.lastName}` : 'TBA';
-          reply += `• **${scheduleSlots[i] || ''}** — ${en.class.course.courseName} (${en.class.course.courseCode})\n  📍 ${roomList[i]} · 👨‍🏫 ${prof}\n`;
+          reply += `• **${scheduleSlots[i] || ''}** — ${en.Class.course.courseName} (${en.Class.course.courseCode})\n  📍 ${roomList[i]} · 👨‍🏫 ${prof}\n`;
         });
       } else {
         reply = `Today's schedule:\n• 09:00 AM: Data Structures (Room 302)\n• 11:00 AM: Operating Systems (Room 405)\n• 02:00 PM: DBMS Lab (Lab 2)`;
@@ -94,12 +94,12 @@ export async function POST(req: NextRequest) {
     } else if (intent === 'grade' && userId) {
       const student = await prisma.student.findFirst({
         where: { userId },
-        include: { submissions: { where: { status: 'graded' }, include: { assignment: { include: { class: { include: { course: true } } } } } } },
+        include: { submissions: { where: { status: 'graded' }, include: { assignment: { include: { Class: { include: { course: true } } } } } } },
       });
       if (student && student.submissions.length > 0) {
         const avgMark = student.submissions.reduce((s, sub) => s + (sub.marks || 0), 0) / student.submissions.length;
         const cgpa = Math.min(10, Math.round(avgMark / 10 * 10) / 10);
-        reply = `Based on your graded assignments, your current estimated CGPA is **${cgpa.toFixed(1)}/10** (Grade ${cgpa >= 9 ? 'O' : cgpa >= 8 ? 'A+' : cgpa >= 7 ? 'A' : cgpa >= 6 ? 'B+' : 'B'}).\n\nSubject breakdown:\n${student.submissions.slice(0, 5).map(s => `• ${s.assignment.class.course.courseName}: **${s.marks}/${s.assignment.maxMarks}**`).join('\n')}`;
+        reply = `Based on your graded assignments, your current estimated CGPA is **${cgpa.toFixed(1)}/10** (Grade ${cgpa >= 9 ? 'O' : cgpa >= 8 ? 'A+' : cgpa >= 7 ? 'A' : cgpa >= 6 ? 'B+' : 'B'}).\n\nSubject breakdown:\n${student.submissions.slice(0, 5).map(s => `• ${s.assignment.Class.course.courseName}: **${s.marks}/${s.assignment.maxMarks}**`).join('\n')}`;
       } else {
         reply = `No graded submissions found yet. Submit your assignments to get grade predictions. Keep up your attendance to maintain eligibility!`;
       }

@@ -16,7 +16,7 @@ export async function GET(req: Request) {
       include: {
         enrollments: {
           include: {
-            class: {
+            Class: {
               include: {
                 course: true,
                 faculty: {
@@ -82,7 +82,7 @@ export async function GET(req: Request) {
     const enrolledSubjects: Array<{ name: string; color: string }> = [];
 
     student.enrollments.forEach(enrollment => {
-      const course = enrollment.class.course;
+      const course = enrollment.Class.course;
       const courseCode = course.courseCode;
       const schedules = scheduleConfig[courseCode] || [];
       const classColor = subjectColors[courseCode] || '#6b7280';
@@ -105,7 +105,7 @@ export async function GET(req: Request) {
                 subject: course.courseName,
                 code: courseCode,
                 room: sched.room,
-                faculty: enrollment.class.faculty ? `Prof. ${enrollment.class.faculty.user.lastName}` : 'N/A',
+                faculty: enrollment.Class.faculty ? `Prof. ${enrollment.Class.faculty.user.lastName}` : 'N/A',
                 color: classColor,
                 duration: sched.duration,
                 isContinuation: i > 0
@@ -122,7 +122,7 @@ export async function GET(req: Request) {
     
     const todayClasses: any[] = [];
     student.enrollments.forEach(enrollment => {
-      const courseCode = enrollment.class.course.courseCode;
+      const courseCode = enrollment.Class.course.courseCode;
       const schedules = scheduleConfig[courseCode] || [];
       const classColor = subjectColors[courseCode] || '#6b7280';
 
@@ -137,9 +137,9 @@ export async function GET(req: Request) {
 
           todayClasses.push({
             time: time12,
-            subject: enrollment.class.course.courseName,
+            subject: enrollment.Class.course.courseName,
             room: sched.room,
-            faculty: enrollment.class.faculty ? `Prof. ${enrollment.class.faculty.user.lastName}` : 'N/A',
+            faculty: enrollment.Class.faculty ? `Prof. ${enrollment.Class.faculty.user.lastName}` : 'N/A',
             color: classColor
           });
         }

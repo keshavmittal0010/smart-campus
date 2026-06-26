@@ -16,7 +16,7 @@ export async function GET(req: Request) {
       include: {
         enrollments: {
           include: {
-            class: {
+            Class: {
               include: {
                 course: true,
                 faculty: {
@@ -49,15 +49,15 @@ export async function GET(req: Request) {
 
     // 2. Map Enrollments to Subject Overview
     const subjects = student.enrollments.map(e => {
-      const courseCode = e.class.course.courseCode;
+      const courseCode = e.Class.course.courseCode;
       const attended = e.attendance.filter(a => a.status === 'present' || a.status === 'late').length;
       const total = e.attendance.length;
 
       return {
-        name: e.class.course.courseName,
+        name: e.Class.course.courseName,
         code: courseCode,
-        faculty: e.class.faculty 
-          ? `Prof. ${e.class.faculty.user.firstName} ${e.class.faculty.user.lastName}` 
+        faculty: e.Class.faculty 
+          ? `Prof. ${e.Class.faculty.user.firstName} ${e.Class.faculty.user.lastName}` 
           : 'N/A',
         attended,
         total: total || 1, // Prevent division by zero, defaults to 1 if no classes held yet
@@ -72,7 +72,7 @@ export async function GET(req: Request) {
         attendanceLog.push({
           date: a.attendanceDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
           time: a.attendanceDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-          subject: e.class.course.courseName,
+          subject: e.Class.course.courseName,
           status: a.status
         });
       });
@@ -87,7 +87,7 @@ export async function GET(req: Request) {
         }
       },
       include: {
-        class: {
+        Class: {
           include: {
             course: true
           }
@@ -101,7 +101,7 @@ export async function GET(req: Request) {
     const sortedLog = allAttendance.map(a => ({
       date: a.attendanceDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       time: a.attendanceDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      subject: a.class.course.courseName,
+      subject: a.Class.course.courseName,
       status: a.status
     }));
 

@@ -30,7 +30,7 @@ export async function GET(req: Request) {
         classId: { in: classIds }
       },
       include: {
-        class: {
+        Class: {
           include: {
             course: true
           }
@@ -72,14 +72,14 @@ export async function GET(req: Request) {
 
       return {
         id: a.id,
-        subject: a.class.course.courseName,
-        code: a.class.course.courseCode,
+        subject: a.Class.course.courseName,
+        code: a.Class.course.courseCode,
         title: a.title,
         desc: a.description || '',
         due: a.dueDate.toISOString().split('T')[0], // 'YYYY-MM-DD'
         maxMarks: a.maxMarks,
         status,
-        color: subjectColors[a.class.course.courseCode] || '#3b82f6',
+        color: subjectColors[a.Class.course.courseCode] || '#3b82f6',
         submitted: isSubmitted,
         marks,
         feedback

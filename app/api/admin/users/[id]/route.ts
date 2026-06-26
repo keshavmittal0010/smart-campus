@@ -16,12 +16,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const user = await prisma.user.update({
       where: { id },
       data: updateData,
-      include: { studentProfile: true, facultyProfile: true },
+      include: { student: true, faculty: true },
     });
 
     // Update profile if department/semester provided
     if (department || semester) {
-      if (user.studentProfile) {
+      if (user.student) {
         await prisma.student.update({
           where: { userId: id },
           data: {
@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             ...(semester && { semester }),
           },
         });
-      } else if (user.facultyProfile) {
+      } else if (user.faculty) {
         await prisma.faculty.update({
           where: { userId: id },
           data: { ...(department && { department }) },

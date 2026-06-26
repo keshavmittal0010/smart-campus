@@ -23,8 +23,8 @@ export async function GET(req: NextRequest) {
       prisma.user.findMany({
         where,
         include: {
-          studentProfile: true,
-          facultyProfile: true,
+          student: true,
+          faculty: true,
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
@@ -40,10 +40,10 @@ export async function GET(req: NextRequest) {
         email: u.email,
         role: u.role,
         createdAt: u.createdAt,
-        department: u.studentProfile?.department || u.facultyProfile?.department || 'Administration',
-        semester: u.studentProfile?.semester || '—',
-        studentId: u.studentProfile?.studentId,
-        employeeId: u.facultyProfile?.employeeId,
+        department: u.student?.department || u.faculty?.department || 'Administration',
+        semester: u.student?.semester || '—',
+        studentId: u.student?.studentId,
+        employeeId: u.faculty?.employeeId,
         status: 'active', // Can be extended with a status field
       })),
       total,
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
         passwordHash: 'changeme123', // Default password
         role,
         ...(role === 'student' && {
-          studentProfile: {
+          student: {
             create: {
               studentId: `CS${Date.now().toString().slice(-5)}`,
               department: department || 'Computer Science',
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
           },
         }),
         ...(role === 'faculty' && {
-          facultyProfile: {
+          faculty: {
             create: {
               employeeId: `EMP${Date.now().toString().slice(-4)}`,
               department: department || 'Computer Science',
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
           },
         }),
       },
-      include: { studentProfile: true, facultyProfile: true },
+      include: { student: true, faculty: true },
     });
 
     return NextResponse.json({

@@ -14,8 +14,8 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
       take: 5,
       include: {
-        studentProfile: true,
-        facultyProfile: true,
+        student: true,
+        faculty: true,
       },
     });
 
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
         email: u.email,
         role: u.role,
         createdAt: u.createdAt,
-        department: u.studentProfile?.department || u.facultyProfile?.department || 'Administration',
+        department: u.student?.department || u.faculty?.department || 'Administration',
       })),
       platformStats: {
         attendanceMarkedToday,

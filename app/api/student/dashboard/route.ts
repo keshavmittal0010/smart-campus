@@ -16,7 +16,7 @@ export async function GET(req: Request) {
       include: {
         enrollments: {
           include: {
-            class: {
+            Class: {
               include: {
                 course: true,
                 faculty: {
@@ -52,7 +52,7 @@ export async function GET(req: Request) {
         submissions: {
           where: { studentId: student.id }
         },
-        class: {
+        Class: {
           include: { course: true }
         }
       }
@@ -130,7 +130,7 @@ export async function GET(req: Request) {
 
     const todayClasses: any[] = [];
     student.enrollments.forEach(enrollment => {
-      const courseCode = enrollment.class.course.courseCode;
+      const courseCode = enrollment.Class.course.courseCode;
       const schedules = scheduleConfig[courseCode] || [];
       const classColor = subjectColors[courseCode] || '#6b7280';
       
@@ -138,9 +138,9 @@ export async function GET(req: Request) {
         if (sched.day === todayName) {
           todayClasses.push({
             time: sched.time,
-            subject: enrollment.class.course.courseName,
+            subject: enrollment.Class.course.courseName,
             room: sched.room,
-            faculty: enrollment.class.faculty ? `Prof. ${enrollment.class.faculty.user.lastName}` : 'N/A',
+            faculty: enrollment.Class.faculty ? `Prof. ${enrollment.Class.faculty.user.lastName}` : 'N/A',
             color: classColor,
             status: 'upcoming'
           });
@@ -164,7 +164,7 @@ export async function GET(req: Request) {
       }
 
       return {
-        subject: a.class.course.courseName,
+        subject: a.Class.course.courseName,
         title: a.title,
         due: a.dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         status,
@@ -198,9 +198,9 @@ export async function GET(req: Request) {
       const pct = total > 0 ? Math.round((attended / total) * 100) : 0;
 
       return {
-        name: e.class.course.courseName,
+        name: e.Class.course.courseName,
         pct,
-        color: subjectColors[e.class.course.courseCode] || '#6b7280'
+        color: subjectColors[e.Class.course.courseCode] || '#6b7280'
       };
     });
 

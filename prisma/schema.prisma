@@ -8,28 +8,28 @@ datasource db {
 }
 
 model assignment {
-  id           String       @id
-  classId      String
-  title        String
-  description  String?      @db.Text
-  dueDate      DateTime
-  maxMarks     Int          @default(100)
-  createdAt    DateTime     @default(now())
-  Class Class @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Assignment_classId_fkey")
-  submission   submission[]
+  id          String       @id @default(uuid())
+  classId     String
+  title       String
+  description String?      @db.Text
+  dueDate     DateTime
+  maxMarks    Int          @default(100)
+  createdAt   DateTime     @default(now())
+  Class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Assignment_classId_fkey")
+  submissions submission[]
 
   @@index([classId], map: "Assignment_classId_fkey")
 }
 
 model attendance {
-  id             String       @id
+  id             String     @id @default(uuid())
   enrollmentId   String
   classId        String
   attendanceDate DateTime
   status         String
-  createdAt      DateTime     @default(now())
-  Class   Class @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Attendance_classId_fkey")
-  enrollment     enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, map: "Attendance_enrollmentId_fkey")
+  createdAt      DateTime   @default(now())
+  Class          Class      @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Attendance_classId_fkey")
+  enrollment     enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, map: "Attendance_enrollmentId_fkey")
 
   @@unique([enrollmentId, attendanceDate], map: "Attendance_enrollmentId_attendanceDate_key")
   @@index([classId], map: "Attendance_classId_fkey")
@@ -37,15 +37,15 @@ model attendance {
 
 /// This model has been renamed to 'Class' during introspection, because the original name 'class' is reserved.
 model Class {
-  id         String       @id
-  courseId   String
-  facultyId  String?
-  section    String
-  assignment assignment[]
+  id          String       @id @default(uuid())
+  courseId    String
+  facultyId   String?
+  section     String
+  assignments assignment[]
   attendance attendance[]
-  course     course       @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "Class_courseId_fkey")
-  faculty    faculty?     @relation(fields: [facultyId], references: [id], map: "Class_facultyId_fkey")
-  enrollment enrollment[]
+  course      course       @relation(fields: [courseId], references: [id], onDelete: Cascade, map: "Class_courseId_fkey")
+  faculty     faculty?     @relation(fields: [facultyId], references: [id], map: "Class_facultyId_fkey")
+  enrollments enrollment[]
 
   @@index([courseId], map: "Class_courseId_fkey")
   @@index([facultyId], map: "Class_facultyId_fkey")
@@ -53,40 +53,40 @@ model Class {
 }
 
 model course {
-  id           String         @id
-  courseCode   String         @unique(map: "Course_courseCode_key")
-  courseName   String
-  credits      Int
-  department   String
-  semester     String
-  Class Class[]
+  id         String  @id @default(uuid())
+  courseCode String  @unique(map: "Course_courseCode_key")
+  courseName String
+  credits    Int
+  department String
+  semester   String
+  classes    Class[]
 }
 
 model enrollment {
-  id           String       @id
-  studentId    String
-  classId      String
-  status       String       @default("active")
-  grade        Float?
-  attendance   attendance[]
-  Class Class @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Enrollment_classId_fkey")
-  student      student      @relation(fields: [studentId], references: [id], onDelete: Cascade, map: "Enrollment_studentId_fkey")
+  id          String       @id @default(uuid())
+  studentId   String
+  classId     String
+  status      String       @default("active")
+  grade       Float?
+  attendance attendance[]
+  Class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Enrollment_classId_fkey")
+  student     student      @relation(fields: [studentId], references: [id], onDelete: Cascade, map: "Enrollment_studentId_fkey")
 
   @@unique([studentId, classId], map: "Enrollment_studentId_classId_key")
   @@index([classId], map: "Enrollment_classId_fkey")
 }
 
 model faculty {
-  id           String         @id
-  userId       String         @unique(map: "Faculty_userId_key")
-  employeeId   String         @unique(map: "Faculty_employeeId_key")
-  department   String
-  Class Class[]
-  user         user           @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Faculty_userId_fkey")
+  id         String  @id @default(uuid())
+  userId     String  @unique(map: "Faculty_userId_key")
+  employeeId String  @unique(map: "Faculty_employeeId_key")
+  department String
+  classes    Class[]
+  user       user    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Faculty_userId_fkey")
 }
 
 model note {
-  id        String   @id
+  id        String   @id @default(uuid())
   title     String
   content   String   @db.Text
   subject   String
@@ -101,7 +101,7 @@ model note {
 }
 
 model notice {
-  id        String   @id
+  id        String   @id @default(uuid())
   createdBy String
   title     String
   content   String   @db.Text
@@ -114,19 +114,19 @@ model notice {
 }
 
 model student {
-  id         String       @id
-  userId     String       @unique(map: "Student_userId_key")
-  studentId  String       @unique(map: "Student_studentId_key")
-  department String
-  semester   String
-  section    String?
-  enrollment enrollment[]
-  user       user         @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Student_userId_fkey")
-  submission submission[]
+  id          String       @id @default(uuid())
+  userId      String       @unique(map: "Student_userId_key")
+  studentId   String       @unique(map: "Student_studentId_key")
+  department  String
+  semester    String
+  section     String?
+  enrollments enrollment[]
+  user        user         @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Student_userId_fkey")
+  submissions submission[]
 }
 
 model submission {
-  id           String     @id
+  id           String     @id @default(uuid())
   assignmentId String
   studentId    String
   status       String     @default("pending")
@@ -142,16 +142,16 @@ model submission {
 }
 
 model user {
-  id           String   @id
+  id           String   @id @default(uuid())
   email        String   @unique(map: "User_email_key")
   passwordHash String
   firstName    String
   lastName     String
   role         String
   createdAt    DateTime @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime @updatedAt
   faculty      faculty?
-  note         note[]
-  notice       notice[]
+  notes        note[]
+  notices      notice[]
   student      student?
 }

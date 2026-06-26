@@ -13,8 +13,8 @@ export async function POST(req: Request) {
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
-        studentProfile: true,
-        facultyProfile: true
+        student: true,
+        faculty: true
       }
     });
 
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       name: `${user.firstName} ${user.lastName}`,
       role: user.role,
       avatar: user.firstName.substring(0, 2).toUpperCase(),
-      profile: user.studentProfile || user.facultyProfile
+      profile: user.student || user.faculty
     };
 
     // Instead of actual JWT via cookies for this MVP, we return the payload

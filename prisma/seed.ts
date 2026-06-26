@@ -44,7 +44,7 @@ async function main() {
         firstName: s.firstName,
         lastName: s.lastName,
         role: 'student',
-        studentProfile: {
+        student: {
           create: {
             studentId: s.studentId,
             department: s.department,
@@ -54,10 +54,10 @@ async function main() {
         }
       },
       include: {
-        studentProfile: true
+        student: true
       }
     });
-    students.push(user.studentProfile);
+    students.push(user.student);
   }
 
   // Faculty Members
@@ -78,7 +78,7 @@ async function main() {
         firstName: f.firstName,
         lastName: f.lastName,
         role: 'faculty',
-        facultyProfile: {
+        faculty: {
           create: {
             employeeId: f.employeeId,
             department: f.department
@@ -86,10 +86,10 @@ async function main() {
         }
       },
       include: {
-        facultyProfile: true
+        faculty: true
       }
     });
-    faculties.push(user.facultyProfile);
+    faculties.push(user.faculty);
   }
 
   // Admin User
@@ -416,3 +416,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

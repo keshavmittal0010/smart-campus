@@ -1,9 +1,34 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Clearing existing database data...');
+  // Pre-compute all password hashes upfront (async, non-blocking)
+  console.log('Pre-computing password hashes...');
+  const SALT_ROUNDS = 10;
+  const [adminHash, ...studentHashes] = await Promise.all([
+    bcrypt.hash('Adm!n@SmartC@mpus#2026', SALT_ROUNDS),
+    bcrypt.hash('Student@CS21045', SALT_ROUNDS),
+    bcrypt.hash('Student@CS21046', SALT_ROUNDS),
+    bcrypt.hash('Student@CS21047', SALT_ROUNDS),
+    bcrypt.hash('Student@CS21048', SALT_ROUNDS),
+    bcrypt.hash('Student@CS21049', SALT_ROUNDS),
+    bcrypt.hash('Student@CS21050', SALT_ROUNDS),
+    bcrypt.hash('Student@CS21051', SALT_ROUNDS),
+    bcrypt.hash('Student@CS21052', SALT_ROUNDS),
+    bcrypt.hash('Student@CS21053', SALT_ROUNDS),
+    bcrypt.hash('Student@CS21054', SALT_ROUNDS),
+  ]);
+  const [fHash1, fHash2, fHash3, fHash4, fHash5] = await Promise.all([
+    bcrypt.hash('Faculty@EMP001', SALT_ROUNDS),
+    bcrypt.hash('Faculty@EMP002', SALT_ROUNDS),
+    bcrypt.hash('Faculty@EMP003', SALT_ROUNDS),
+    bcrypt.hash('Faculty@EMP004', SALT_ROUNDS),
+    bcrypt.hash('Faculty@EMP005', SALT_ROUNDS),
+  ]);
+  const facultyHashes = [fHash1, fHash2, fHash3, fHash4, fHash5];
+  console.log('Hashes computed. Clearing existing database data...');
   
   // Clean up in dependency order
   await prisma.payment.deleteMany({});
@@ -37,12 +62,14 @@ async function main() {
     { email: 'pooja.nair@campus.edu', firstName: 'Pooja', lastName: 'Nair', studentId: 'CS21054', department: 'Computer Science', semester: '5', section: 'A' },
   ];
 
+  // Student passwords: Student@{studentId}  e.g. Student@CS21045
   const students: any[] = [];
-  for (const s of studentData) {
+  for (let i = 0; i < studentData.length; i++) {
+    const s = studentData[i];
     const user = await prisma.user.create({
       data: {
         email: s.email,
-        passwordHash: 'hashed_password', // For simplicity
+        passwordHash: studentHashes[i],
         firstName: s.firstName,
         lastName: s.lastName,
         role: 'student',
@@ -62,14 +89,10 @@ async function main() {
     students.push(user.student);
   }
 
-  // 1b. Create Student Fees & Payments
+  // 1b. Create Student Fees & Payments (per-student to avoid remote DB timeout)
   console.log('Seeding student fees and payment transactions...');
-  const allFees: any[] = [];
-  const allPayments: any[] = [];
   for (let idx = 0; idx < students.length; idx++) {
     const student = students[idx];
-    
-    // Default fee items
     const feeItems = [
       { label: 'Tuition Fee', amount: 85000, paid: idx % 3 !== 2, dueDate: new Date('2024-08-01') },
       { label: 'Hostel Fee', amount: 42000, paid: idx % 2 === 0, dueDate: new Date('2024-08-01') },
@@ -78,34 +101,35 @@ async function main() {
       { label: 'Miscellaneous', amount: 3200, paid: false, dueDate: new Date('2024-11-30'), overdue: true },
     ];
 
-    for (const f of feeItems) {
-      allFees.push({
-        studentId: student.id,
-        label: f.label,
-        amount: f.amount,
-        paid: f.paid,
-        dueDate: f.dueDate,
-        overdue: f.overdue || false,
-      });
+    const studentFees = feeItems.map(f => ({
+      studentId: student.id,
+      label: f.label,
+      amount: f.amount,
+      paid: f.paid,
+      dueDate: f.dueDate,
+      overdue: (f as any).overdue || false,
+    }));
+    await prisma.fee.createMany({ data: studentFees });
 
-      // If paid, create a payment transaction record
-      if (f.paid) {
+    const studentPayments = feeItems
+      .filter(f => f.paid)
+      .map(f => {
         const payDate = new Date('2024-08-05');
         payDate.setDate(payDate.getDate() + (idx % 5));
-        
-        allPayments.push({
+        return {
           studentId: student.id,
           feeLabel: f.label,
           amount: f.amount,
           method: idx % 2 === 0 ? 'Net Banking' : 'UPI',
           status: 'success',
           date: payDate,
-        });
-      }
+        };
+      });
+    if (studentPayments.length > 0) {
+      await prisma.payment.createMany({ data: studentPayments });
     }
+    console.log(`  Fees seeded for student ${idx + 1}/${students.length}`);
   }
-  await prisma.fee.createMany({ data: allFees });
-  await prisma.payment.createMany({ data: allPayments });
 
   // Faculty Members
   const facultyData = [
@@ -116,12 +140,14 @@ async function main() {
     { email: 'prof.joshi@campus.edu', firstName: 'Kavita', lastName: 'Joshi', employeeId: 'EMP005', department: 'Computer Science' },
   ];
 
+  // Faculty passwords: Faculty@{employeeId}  e.g. Faculty@EMP001
   const faculties: any[] = [];
-  for (const f of facultyData) {
+  for (let i = 0; i < facultyData.length; i++) {
+    const f = facultyData[i];
     const user = await prisma.user.create({
       data: {
         email: f.email,
-        passwordHash: 'hashed_password',
+        passwordHash: facultyHashes[i],
         firstName: f.firstName,
         lastName: f.lastName,
         role: 'faculty',
@@ -139,11 +165,11 @@ async function main() {
     faculties.push(user.faculty);
   }
 
-  // Admin User
+  // Admin User — strong unique password
   const adminUser = await prisma.user.create({
     data: {
       email: 'admin@campus.edu',
-      passwordHash: 'hashed_password',
+      passwordHash: adminHash,
       firstName: 'System',
       lastName: 'Admin',
       role: 'admin'

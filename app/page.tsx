@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const roles = [
-  { id: 'student', label: 'Student', emoji: '🎓', color: '#3b82f6', demo: { email: 'arjun.sharma@campus.edu', password: 'student123' } },
-  { id: 'faculty', label: 'Faculty', emoji: '👨‍🏫', color: '#10b981', demo: { email: 'prof.mehta@campus.edu', password: 'faculty123' } },
-  { id: 'admin', label: 'Admin', emoji: '🏛️', color: '#8b5cf6', demo: { email: 'admin@campus.edu', password: 'admin123' } },
+  { id: 'student', label: 'Student', emoji: '🎓', color: '#3b82f6' },
+  { id: 'faculty', label: 'Faculty', emoji: '👨‍🏫', color: '#10b981' },
+  { id: 'admin', label: 'Admin', emoji: '🏛️', color: '#8b5cf6' },
 ];
 
 const features = [
@@ -20,17 +20,14 @@ const features = [
 export default function LoginPage() {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState('student');
-  const [email, setEmail] = useState('arjun.sharma@campus.edu');
-  const [password, setPassword] = useState('student123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleDemoLogin = (roleId: string) => {
-    const role = roles.find(r => r.id === roleId)!;
+  const handleRoleSelect = (roleId: string) => {
     setSelectedRole(roleId);
-    setEmail(role.demo.email);
-    setPassword(role.demo.password);
     setError('');
   };
 
@@ -58,7 +55,7 @@ export default function LoginPage() {
       
       router.push(`/${data.user.role}/dashboard`);
     } catch (err: any) {
-      setError(err.message || 'Invalid credentials. Use the demo login buttons below.');
+      setError(err.message || 'Invalid credentials. Please check your email and password.');
       setLoading(false);
     }
   };
@@ -112,7 +109,7 @@ export default function LoginPage() {
                 type="button"
                 className={`role-btn ${selectedRole === role.id ? 'active' : ''}`}
                 style={{ color: selectedRole === role.id ? role.color : '' }}
-                onClick={() => handleDemoLogin(role.id)}
+                onClick={() => handleRoleSelect(role.id)}
               >
                 <span style={{ fontSize: '1.5rem' }}>{role.emoji}</span>
                 {role.label}
